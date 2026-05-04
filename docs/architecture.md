@@ -1,4 +1,4 @@
-# Arquitectura propuesta
+# Arquitectura
 
 ## Objetivo
 
@@ -14,15 +14,25 @@ Construir un sistema automatizado y reproducible que recolecte datos competitivo
 
 ## Componentes
 
-- `collectors`: un collector por plataforma.
-- `raw data`: salida cruda por observacion.
-- `analysis`: limpieza, metricas comparativas e indices.
+- `locations`: catalogo de direcciones representativas y justificacion geografica.
+- `collectors`: interfaz comun para recolectar datos por plataforma.
+- `raw data`: salida cruda estandarizada por observacion.
+- `analysis`: limpieza, metricas comparativas e indice competitivo.
 - `reports`: insights y visualizaciones.
 - `dashboard`: vista ejecutiva para exploracion.
 
+## Flujo de datos
+
+1. Se define una matriz de direcciones, plataformas y productos comparables.
+2. Cada collector devuelve filas con el mismo contrato de datos.
+3. El pipeline guarda la salida raw para trazabilidad.
+4. El modulo de analisis normaliza tipos numericos y calcula metricas derivadas.
+5. El indice competitivo compara competidores contra Rappi al mismo nivel de producto y direccion.
+6. Se generan graficos, reporte de insights y dashboard.
+
 ## Estrategia de scraping live
 
-Para produccion o una segunda iteracion:
+Para una version productiva:
 
 - Usar Playwright por plataforma.
 - Correr con browser persistente para mantener sesion controlada.
@@ -31,7 +41,3 @@ Para produccion o una segunda iteracion:
 - Manejar productos no disponibles como dato, no como error.
 - Separar selectores por plataforma.
 - Si hay bloqueos, evaluar APIs no oficiales o proveedores como ScraperAPI/Bright Data documentando costos.
-
-## Por que no n8n como core
-
-n8n es bueno para orquestacion, alertas y workflows visibles. Pero el brief evalua calidad de scraping, robustez, manejo de errores, output estructurado y diseno tecnico. Eso se defiende mejor con Python modular. n8n podria ejecutar el pipeline, enviar alertas por Slack o publicar reportes, pero no reemplaza el core tecnico.

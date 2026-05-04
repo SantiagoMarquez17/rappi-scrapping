@@ -9,6 +9,7 @@ from src.config import CHARTS_DIR, REPORTS_DIR
 
 
 def clean(raw_df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize raw collector output and add metrics used downstream."""
     df = raw_df.copy()
     numeric_cols = [
         "product_price_mxn",
@@ -22,6 +23,8 @@ def clean(raw_df: pd.DataFrame) -> pd.DataFrame:
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors="coerce")
 
+    # ETA and fees are modeled as explicit derived fields because they are
+    # central to pricing, operations and strategy comparisons.
     df["eta_avg_minutes"] = (df["eta_min_minutes"] + df["eta_max_minutes"]) / 2
     df["fee_total_mxn"] = df["delivery_fee_mxn"] + df["service_fee_mxn"]
     df["is_rappi"] = df["platform"].eq("Rappi")
@@ -29,6 +32,7 @@ def clean(raw_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_competitive_index(df: pd.DataFrame) -> pd.DataFrame:
+    """Compare each competitor against Rappi for the same product and address."""
     keys = ["city", "zone", "address_id", "product"]
     rappi = (
         df[df["platform"] == "Rappi"][keys + ["final_total_mxn", "eta_avg_minutes", "fee_total_mxn"]]
@@ -42,6 +46,7 @@ def build_competitive_index(df: pd.DataFrame) -> pd.DataFrame:
     )
     competitors = df[df["platform"] != "Rappi"].copy()
     out = competitors.merge(rappi, on=keys, how="left")
+    # Positive values mean Rappi is higher than the competitor for that metric.
     out["total_gap_vs_rappi_pct"] = (out["rappi_total"] - out["final_total_mxn"]) / out["final_total_mxn"]
     out["eta_gap_vs_rappi_min"] = out["rappi_eta"] - out["eta_avg_minutes"]
     out["fee_gap_vs_rappi_pct"] = (out["rappi_fees"] - out["fee_total_mxn"]) / out["fee_total_mxn"]
@@ -49,6 +54,7 @@ def build_competitive_index(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def generate_charts(df: pd.DataFrame, competitive: pd.DataFrame) -> None:
+    """Create static charts that can be embedded in a report or presentation."""
     CHARTS_DIR.mkdir(parents=True, exist_ok=True)
 
     price = df.groupby("platform", as_index=False)["final_total_mxn"].mean().dropna()
@@ -78,6 +84,7 @@ def generate_charts(df: pd.DataFrame, competitive: pd.DataFrame) -> None:
 
 
 def write_insights(df: pd.DataFrame, competitive: pd.DataFrame, output_path: Path | None = None) -> Path:
+    """Write an executive markdown report with findings, impact and actions."""
     output_path = output_path or REPORTS_DIR / "insights.md"
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -86,6 +93,8 @@ def write_insights(df: pd.DataFrame, competitive: pd.DataFrame, output_path: Pat
     avg_fee = df.groupby("platform")["fee_total_mxn"].mean().sort_values()
     availability = df.groupby("platform")["available"].mean().sort_values(ascending=False)
     rappi_vs_comp = competitive.groupby("platform")[["total_gap_vs_rappi_pct", "eta_gap_vs_rappi_min", "fee_gap_vs_rappi_pct"]].mean()
+
+    # Build the markdown table without optional pandas dependencies.
     table_rows = [
         "| Competidor | Brecha total vs Rappi | Brecha ETA vs Rappi | Brecha fees vs Rappi |",
         "| --- | ---: | ---: | ---: |",

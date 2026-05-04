@@ -13,6 +13,8 @@ PLATFORM_PROFILE = {
     "DiDi Food": {"price": 0.97, "delivery_fee": 0.86, "service_fee": 0.06, "eta": 1.08, "promo": 0.22},
 }
 
+# Baseline prices and platform profiles make the sample dataset deterministic
+# while preserving realistic differences in price, fees, ETA and promotions.
 PRODUCT_BASE_PRICE = {
     "Big Mac": 89,
     "Combo mediano": 145,
@@ -33,6 +35,7 @@ ZONE_MULTIPLIER = {
 
 
 def build_sample_rows(seed: int = 42) -> list[dict]:
+    """Create a reproducible dataset with the same schema as live collectors."""
     random.seed(seed)
     rows = []
     scraped_at = datetime.now(timezone.utc).isoformat()
@@ -53,6 +56,8 @@ def build_sample_rows(seed: int = 42) -> list[dict]:
                 eta_max = eta_min + random.choice([8, 10, 12, 15])
                 final_total = round(product_price + delivery_fee + service_fee - discount, 2)
 
+                # Unavailable items are kept as rows with null commercial values;
+                # availability itself is a competitive signal.
                 rows.append(
                     {
                         "scraped_at": scraped_at,

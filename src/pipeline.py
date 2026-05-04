@@ -20,6 +20,8 @@ def run(mode: str) -> None:
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 
+    # Each collector returns rows with the same schema, which keeps the rest of
+    # the pipeline independent from platform-specific scraping details.
     rows = []
     for collector in get_collectors(mode):
         logging.info("Collecting platform=%s mode=%s", collector.platform, mode)
@@ -33,16 +35,21 @@ def run(mode: str) -> None:
     if not rows:
         raise RuntimeError("No rows collected. Use --mode sample for the reproducible demo path.")
 
+    # Keep raw data as the audit layer before any transformations are applied.
     raw_df = pd.DataFrame(rows)
     raw_path = RAW_DIR / "competitive_raw.csv"
     raw_df.to_csv(raw_path, index=False)
     logging.info("Wrote raw output: %s", raw_path)
 
+    # The clean dataset adds typed numeric fields and derived metrics used by
+    # both the report and the dashboard.
     clean_df = clean(raw_df)
     clean_path = PROCESSED_DIR / "competitive_clean.csv"
     clean_df.to_csv(clean_path, index=False)
     logging.info("Wrote clean output: %s", clean_path)
 
+    # Competitive gaps are calculated at product + address level to avoid
+    # comparing averages from different local markets.
     competitive = build_competitive_index(clean_df)
     competitive_path = PROCESSED_DIR / "competitive_index.csv"
     competitive.to_csv(competitive_path, index=False)

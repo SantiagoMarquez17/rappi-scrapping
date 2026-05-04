@@ -16,6 +16,8 @@ if not CLEAN_PATH.exists():
     st.warning("Ejecuta primero: python -m src.pipeline --mode sample")
     st.stop()
 
+# The dashboard reads generated artifacts instead of recomputing metrics so it
+# stays aligned with the reproducible pipeline outputs.
 df = pd.read_csv(CLEAN_PATH)
 index_df = pd.read_csv(INDEX_PATH)
 
@@ -25,6 +27,8 @@ product = st.sidebar.multiselect("Producto", sorted(df["product"].unique()), def
 
 filtered = df[df["city"].isin(city) & df["zone_type"].isin(zone_type) & df["product"].isin(product)]
 
+# Executive KPIs summarize coverage and the commercial/operational baseline for
+# the selected filters.
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Observaciones", f"{len(filtered):,}")
 col2.metric("Direcciones", filtered["address_id"].nunique())

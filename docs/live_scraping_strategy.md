@@ -1,8 +1,8 @@
-# Estrategia para scraping live
+# Estrategia de scraping live
 
-## Camino recomendado
+## Objetivo
 
-En dos dias, no conviene prometer scraping perfecto de apps complejas. Conviene mostrar arquitectura, un MVP reproducible y un plan claro para live scraping.
+Extender los collectors actuales para recolectar informacion directamente desde las plataformas, manteniendo el mismo contrato de salida usado por el pipeline analitico.
 
 ## Implementacion con Playwright
 
@@ -15,6 +15,30 @@ Flujo por plataforma:
 5. Guardar screenshot como evidencia.
 6. Guardar raw HTML o JSON cuando sea posible.
 7. Normalizar a las columnas estandar.
+
+## Contrato de salida
+
+Cada collector debe devolver una lista de diccionarios con las columnas esperadas por `src.analysis.clean`:
+
+- `scraped_at`
+- `platform`
+- `city`
+- `zone`
+- `zone_type`
+- `address_id`
+- `address`
+- `product`
+- `restaurant`
+- `available`
+- `product_price_mxn`
+- `delivery_fee_mxn`
+- `service_fee_mxn`
+- `discount_mxn`
+- `eta_min_minutes`
+- `eta_max_minutes`
+- `final_total_mxn`
+- `evidence_url`
+- `notes`
 
 ## Manejo de errores
 
@@ -42,15 +66,3 @@ Guardar por observacion:
 - screenshot path
 - URL o estado
 - notas de bloqueo
-
-## Donde entra n8n
-
-n8n puede:
-
-- disparar el pipeline cada hora;
-- enviar alertas a Slack;
-- guardar outputs en Google Drive;
-- notificar cambios grandes de precio;
-- crear tickets para Strategy/Pricing.
-
-Pero el scraping y analisis deben quedar en Python para mantener control, testabilidad y versionamiento.
