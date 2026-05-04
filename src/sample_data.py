@@ -78,7 +78,7 @@ def build_sample_rows(seed: int = 42) -> list[dict]:
                         "eta_max_minutes": eta_max if available else None,
                         "final_total_mxn": final_total if available else None,
                         "evidence_url": "",
-                        "notes": "sample_data_for_demo_backup",
+                        "notes": "reproducible_seed_dataset",
                     }
                 )
 
